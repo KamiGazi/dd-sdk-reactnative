@@ -5,7 +5,8 @@ import ErrorScreen from './screens/ErrorScreen';
 import AboutScreen from './screens/AboutScreen';
 import {
     DdRumReactNativeNavigationTracking,
-    ViewNamePredicate,
+    ViewTrackingMapper,
+    ViewTrackingOptions,
     ComponentDidAppearEvent,
     Navigation
 } from '@datadog/mobile-react-native-navigation';
@@ -14,15 +15,31 @@ import styles from './screens/styles';
 import { DdTrace } from '@datadog/mobile-react-native';
 import TraceScreen from './screens/TraceScreen';
 
-const viewPredicate: ViewNamePredicate = (
-    _event: ComponentDidAppearEvent,
-    trackedName: string
-) => {
-    return 'Custom RNN ' + trackedName;
-};
+const viewTrackingMapper: ViewTrackingMapper = (
+    event: ComponentDidAppearEvent,
+    trackedName: string): ViewTrackingOptions => {
+
+    if (trackedName === "AlertModal") {
+      return undefined;
+    }
+
+    const filteredPassProps: any = {};
+    if (event.passProps?.creditCardNumber) {
+      filteredPassProps["creditCardNumber"] = "XXXX XXXX XXXX XXXX";
+    }
+
+    if (event.passProps?.username) {
+      filteredPassProps["username"] = event.passProps.username;
+    }
+    
+    return {
+      name: trackedName,
+      passProps: filteredPassProps,
+    }
+}
 
 function startReactNativeNavigation() {
-    DdRumReactNativeNavigationTracking.startTracking(viewPredicate);
+    DdRumReactNativeNavigationTracking.startTracking(viewTrackingMapper);
     registerScreens();
     Navigation.events().registerAppLaunchedListener(async () => {
         Navigation.setRoot({
@@ -80,7 +97,13 @@ const HomeScreen = props => {
                 title="About"
                 onPress={() => {
                     Navigation.push(props.componentId, {
-                        component: { name: 'About' }
+                        component: { 
+                                name: 'About',
+                                passProps: {
+                                        username: "test",
+                                        creditCardNumber: "4242 4242 4242 4242"
+                                    } 
+                         }
                     });
                 }}
             />

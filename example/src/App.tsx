@@ -6,7 +6,7 @@ import ErrorScreen from './screens/ErrorScreen';
 import AboutScreen from './screens/AboutScreen';
 import style from './screens/styles';
 import { navigationRef } from './NavigationRoot';
-import { DdRumReactNavigationTracking, ViewNamePredicate } from '@datadog/mobile-react-navigation';
+import { DdRumReactNavigationTracking, ViewTrackingMapper, ViewTrackingOptions } from '@datadog/mobile-react-navigation';
 import {DatadogProvider, FileBasedConfiguration} from '@datadog/mobile-react-native'
 import { Route } from "@react-navigation/native";
 import { NestedNavigator } from './screens/NestedNavigator/NestedNavigator';
@@ -15,9 +15,31 @@ import { TrackingConsent } from '@datadog/mobile-react-native';
 
 const Tab = createBottomTabNavigator();
 
-const viewPredicate: ViewNamePredicate = function customViewNamePredicate(route: Route<string, any | undefined>, trackedName: string) {
-  return "Custom RN " + trackedName;
+const viewTrackingMapper: ViewTrackingMapper = (
+    route: Route<string, any | undefined>,
+    trackedName: string): ViewTrackingOptions => {
+    console.log("Custom view tracking mapper", route);
+
+
+    if (trackedName === "AlertModal") {
+      return undefined;
+    }
+
+    const filteredParams: any = {};
+    if (route.params?.creditCardNumber) {
+      filteredParams["creditCardNumber"] = "XXXX XXXX XXXX XXXX";
+    }
+
+    if (route.params?.username) {
+      filteredParams["username"] = route.params.username;
+    }
+    
+    return {
+      name: trackedName,
+      params: filteredParams,
+    }
 }
+
 
 // === Datadog Provider Configuration schemes ===
 
@@ -39,7 +61,7 @@ export default function App() {
   return (
     <DatadogProvider configuration={configuration} onInitialization={onDatadogInitialization}>
       <NavigationContainer ref={navigationRef} onReady={() => {
-        DdRumReactNavigationTracking.startTrackingViews(navigationRef.current, viewPredicate)
+        DdRumReactNavigationTracking.startTrackingViews(navigationRef.current, viewTrackingMapper)
       }}>
         <Tab.Navigator screenOptions={{
           tabBarLabelStyle: style.tabLabelStyle,

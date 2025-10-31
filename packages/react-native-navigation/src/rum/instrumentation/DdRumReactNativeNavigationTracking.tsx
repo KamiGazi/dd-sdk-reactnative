@@ -14,10 +14,27 @@ import type {
 } from 'react-native';
 import { AppState } from 'react-native';
 
-export type ViewNamePredicate = (
+export type ViewTrackingOptions =
+    | undefined
+    | {
+          name: string;
+          passProps: object | undefined;
+      };
+
+export type ViewTrackingMapper = (
     event: ComponentDidAppearEvent,
     trackedName: string
-) => string | null;
+) => ViewTrackingOptions;
+
+function defaultViewTrackingMapper(
+    event: ComponentDidAppearEvent,
+    trackedName: string
+): ViewTrackingOptions {
+    return {
+        name: trackedName,
+        passProps: event.passProps
+    };
+}
 
 // AppStateStatus can have values:
 //     'active' - The app is running in the foreground
@@ -36,8 +53,7 @@ export class DdRumReactNativeNavigationTracking {
         | EmitterSubscription
         | undefined = undefined;
     private static appStateSubscription?: NativeEventSubscription;
-
-    private static viewNamePredicate: ViewNamePredicate;
+    private static viewTrackingMapper: ViewTrackingMapper;
     private static lastView?:
         | {
               key: string;
@@ -49,13 +65,7 @@ export class DdRumReactNativeNavigationTracking {
      * Starts tracking the Navigation and sends a RUM View event every time a root View component appear/disappear.
      */
     static startTracking(
-        // eslint-disable-next-line func-names
-        viewNamePredicate: ViewNamePredicate = function (
-            _event: ComponentDidAppearEvent,
-            trackedName: string
-        ) {
-            return trackedName;
-        }
+        viewTrackingMapper: ViewTrackingMapper = defaultViewTrackingMapper
     ): void {
         // extra safety to avoid wrapping more than 1 time this function
         if (DdRumReactNativeNavigationTracking.isTracking) {
@@ -64,11 +74,16 @@ export class DdRumReactNativeNavigationTracking {
 
         DdRumReactNativeNavigationTracking.eventSubscription = Navigation.events().registerComponentDidAppearListener(
             (event: ComponentDidAppearEvent) => {
-                const predicate =
-                    DdRumReactNativeNavigationTracking.viewNamePredicate;
-                const screenName = predicate(event, event.componentName);
-                if (screenName !== null) {
-                    DdRum.startView(event.componentId, screenName);
+                const viewTrackingOptions = DdRumReactNativeNavigationTracking.viewTrackingMapper(
+                    event,
+                    event.componentName
+                );
+                if (viewTrackingOptions !== undefined) {
+                    const screenName = viewTrackingOptions.name;
+                    const passProps = viewTrackingOptions.passProps;
+                    DdRum.startView(event.componentId, screenName, {
+                        passProps
+                    });
                     DdRumReactNativeNavigationTracking.lastView = {
                         key: event.componentId,
                         name: screenName
@@ -78,7 +93,7 @@ export class DdRumReactNativeNavigationTracking {
         );
 
         DdRumReactNativeNavigationTracking.isTracking = true;
-        DdRumReactNativeNavigationTracking.viewNamePredicate = viewNamePredicate;
+        DdRumReactNativeNavigationTracking.viewTrackingMapper = viewTrackingMapper;
         this.appStateSubscription = AppState.addEventListener(
             'change',
             DdRumReactNativeNavigationTracking.appStateListener
@@ -110,14 +125,7 @@ export class DdRumReactNativeNavigationTracking {
 
         DdRumReactNativeNavigationTracking.lastView = undefined;
         DdRumReactNativeNavigationTracking.isTracking = false;
-
-        // eslint-disable-next-line func-names
-        DdRumReactNativeNavigationTracking.viewNamePredicate = function (
-            _event: ComponentDidAppearEvent,
-            trackedName: string
-        ) {
-            return trackedName;
-        };
+        DdRumReactNativeNavigationTracking.viewTrackingMapper = defaultViewTrackingMapper;
     }
 
     private static appStateListener: AppStateListener = (

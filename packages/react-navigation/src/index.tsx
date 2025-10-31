@@ -4,9 +4,12 @@
  * Copyright 2016-Present Datadog, Inc.
  */
 
-import type { ViewNamePredicate } from './rum/instrumentation/DdRumReactNavigationTracking';
+import type {
+    ViewTrackingMapper,
+    ViewTrackingOptions
+} from './rum/instrumentation/DdRumReactNavigationTracking';
 import { DdRumReactNavigationTracking } from './rum/instrumentation/DdRumReactNavigationTracking';
 
 export { DdRumReactNavigationTracking };
 
-export type { ViewNamePredicate };
+export type { ViewTrackingMapper, ViewTrackingOptions };

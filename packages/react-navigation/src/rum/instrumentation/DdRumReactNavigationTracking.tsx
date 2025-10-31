@@ -24,10 +24,27 @@ import type {
 //     'extension' [iOS] - The app is running as an app extension
 declare type AppStateListener = (appStateStatus: AppStateStatus) => void | null;
 
-export type ViewNamePredicate = (
+export type ViewTrackingOptions =
+    | undefined
+    | {
+          name: string;
+          params: object | undefined;
+      };
+
+export type ViewTrackingMapper = (
     route: Route<string, any | undefined>,
     trackedName: string
-) => string | null;
+) => ViewTrackingOptions;
+
+function defaultViewTrackingMapper(
+    route: Route<string, any | undefined>,
+    trackedName: string
+): ViewTrackingOptions {
+    return {
+        name: trackedName,
+        params: route.params
+    };
+}
 
 /**
  * Provides RUM integration for the [ReactNavigation](https://reactnavigation.org/) API.
@@ -50,7 +67,7 @@ export class DdRumReactNavigationTracking {
 
     private static previousRoute: string | object | undefined = undefined;
 
-    private static viewNamePredicate: ViewNamePredicate;
+    private static viewTrackingMapper: ViewTrackingMapper;
 
     private static backHandler: NativeEventSubscription | null;
 
@@ -115,14 +132,7 @@ export class DdRumReactNavigationTracking {
      */
     static startTrackingViews(
         navigationRef: NavigationContainerRef | null,
-
-        // eslint-disable-next-line func-names
-        viewNamePredicate: ViewNamePredicate = function (
-            _route: Route<string, any | undefined>,
-            trackedName: string
-        ) {
-            return trackedName;
-        }
+        viewTrackingMapper: ViewTrackingMapper = defaultViewTrackingMapper
     ): void {
         this.navigationTimeline?.addStartTrackingEvent();
 
@@ -143,7 +153,7 @@ export class DdRumReactNavigationTracking {
                 SdkVerbosity.ERROR
             );
         } else if (DdRumReactNavigationTracking.registeredContainer == null) {
-            DdRumReactNavigationTracking.viewNamePredicate = viewNamePredicate;
+            DdRumReactNavigationTracking.viewTrackingMapper = viewTrackingMapper;
             DdRumReactNavigationTracking.registeredContainer = navigationRef;
 
             const listener = DdRumReactNavigationTracking.resolveNavigationStateChangeListener();
@@ -180,14 +190,7 @@ export class DdRumReactNavigationTracking {
             DdRumReactNavigationTracking.backHandler = null;
             DdRumReactNavigationTracking.registeredContainer = null;
             DdRumReactNavigationTracking.navigationStateChangeListener = null;
-
-            // eslint-disable-next-line func-names
-            DdRumReactNavigationTracking.viewNamePredicate = function (
-                _route: Route<string, any | undefined>,
-                trackedName: string
-            ) {
-                return trackedName;
-            };
+            DdRumReactNavigationTracking.viewTrackingMapper = defaultViewTrackingMapper;
         }
 
         // For versions of React Native below 0.65, addEventListener does not return a subscription.
@@ -223,10 +226,12 @@ export class DdRumReactNavigationTracking {
             return;
         }
         const key = route.key;
-        const screenName = DdRumReactNavigationTracking.viewNamePredicate(
+        const viewTrackingOptions = DdRumReactNavigationTracking.viewTrackingMapper(
             route,
             route.name
         );
+
+        const screenName = viewTrackingOptions?.name;
 
         if (key != null && screenName != null) {
             // On iOS, the app can start in either "active", "background" or "unknown" state
@@ -242,7 +247,10 @@ export class DdRumReactNavigationTracking {
                         trackingState: this.trackingState
                     }
                 );
-                DdRum.startView(key, screenName);
+                if (viewTrackingOptions !== undefined) {
+                    const params = viewTrackingOptions?.params;
+                    DdRum.startView(key, screenName, { params });
+                }
             }
         }
 
@@ -258,12 +266,12 @@ export class DdRumReactNavigationTracking {
             appStateStatus
         );
         const key = route.key;
-        const screenName = DdRumReactNavigationTracking.viewNamePredicate(
+        const viewTrackingOptions = DdRumReactNavigationTracking.viewTrackingMapper(
             route,
             route.name
         );
 
-        if (key != null && screenName != null) {
+        if (key != null && viewTrackingOptions?.name != null) {
             if (appStateStatus === 'background') {
                 DdRumReactNavigationTracking.trackingState = 'NOT_TRACKING';
                 this.navigationTimeline?.addNavigationStateEvent(
