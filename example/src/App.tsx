@@ -60,7 +60,6 @@ export default function App() {
     <DatadogProvider configuration={configuration} onInitialization={onDatadogInitialization}>
       <NavigationContainer ref={navigationRef} onReady={() => {
         DdRumReactNavigationTracking.startTrackingViews(navigationRef.current, viewNamingPredicate, viewTrackingPredicate, paramsTrackingPredicate)
-        // DdRumReactNavigationTracking.startTrackingViews(navigationRef.current, undefined, undefined, paramsTrackingPredicate)
       }}>
         <Tab.Navigator screenOptions={{
           tabBarLabelStyle: style.tabLabelStyle,
