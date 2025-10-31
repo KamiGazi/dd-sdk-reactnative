@@ -6,23 +6,42 @@ import AboutScreen from './screens/AboutScreen';
 import {
     DdRumReactNativeNavigationTracking,
     ViewNamePredicate,
+    ViewTrackingPredicate,
+    ParamsTrackingPredicate,
     ComponentDidAppearEvent,
     Navigation
 } from '@datadog/mobile-react-native-navigation';
 
 import styles from './screens/styles';
-import { DdTrace } from '@datadog/mobile-react-native';
 import TraceScreen from './screens/TraceScreen';
 
-const viewPredicate: ViewNamePredicate = (
-    _event: ComponentDidAppearEvent,
-    trackedName: string
-) => {
-    return 'Custom RNN ' + trackedName;
-};
+const viewNamePredicate: ViewNamePredicate = function customViewNamePredicate(_event: ComponentDidAppearEvent, trackedName: string) {
+    return "Custom RN " + trackedName;
+}
+
+const viewTrackingPredicate: ViewTrackingPredicate = function customViewTrackingPredicate(event: ComponentDidAppearEvent) { 
+    if (event.name === "AlertModal") {
+        return false;
+    }
+
+    return true;
+}
+
+const paramsTrackingPredicate: ParamsTrackingPredicate = function customParamsTrackingPredicate(event: ComponentDidAppearEvent) { 
+    const filteredParams: any = {};
+    if (event.passProps?.creditCardNumber) {
+        filteredParams["creditCardNumber"] = "XXXX XXXX XXXX XXXX";
+    }
+
+    if (event.passProps?.username) {
+        filteredParams["username"] = event.passProps.username;
+    }
+
+    return filteredParams;
+}
 
 function startReactNativeNavigation() {
-    DdRumReactNativeNavigationTracking.startTracking(viewPredicate);
+    DdRumReactNativeNavigationTracking.startTracking(viewNamePredicate, viewTrackingPredicate, paramsTrackingPredicate);
     registerScreens();
     Navigation.events().registerAppLaunchedListener(async () => {
         Navigation.setRoot({
@@ -62,7 +81,7 @@ const HomeScreen = props => {
                 title="Error"
                 onPress={() => {
                     Navigation.push(props.componentId, {
-                        component: { name: 'Error' }
+                        component: { name: 'Error' },
                     });
                 }}
             />
@@ -80,7 +99,12 @@ const HomeScreen = props => {
                 title="About"
                 onPress={() => {
                     Navigation.push(props.componentId, {
-                        component: { name: 'About' }
+                        component: { name: 'About',
+                                    passProps: {
+                                        username: "test",
+                                        creditCardNumber: "4242 4242 4242 4242"
+                                    } 
+                                }
                     });
                 }}
             />

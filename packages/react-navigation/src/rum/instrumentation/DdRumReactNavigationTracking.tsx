@@ -29,6 +29,29 @@ export type ViewNamePredicate = (
     trackedName: string
 ) => string | null;
 
+export type ViewTrackingPredicate = (
+    route: Route<string, any | undefined>
+) => boolean;
+
+export type ParamsTrackingPredicate = (
+    route: Route<string, any | undefined>
+) => object | undefined;
+
+function defaultViewNamePredicate(
+    _route: Route<string, any | undefined>,
+    trackedName: string
+) {
+    return trackedName;
+}
+
+function defaultParamsPredicate(_route: Route<string, any | undefined>) {
+    return undefined;
+}
+
+function defaultViewTrackingPredicate(_route: Route<string, any | undefined>) {
+    return true;
+}
+
 /**
  * Provides RUM integration for the [ReactNavigation](https://reactnavigation.org/) API.
  */
@@ -51,6 +74,10 @@ export class DdRumReactNavigationTracking {
     private static previousRoute: string | object | undefined = undefined;
 
     private static viewNamePredicate: ViewNamePredicate;
+
+    private static viewTrackingPredicate: ViewTrackingPredicate;
+
+    private static paramsTrackingPredicate: ParamsTrackingPredicate;
 
     private static backHandler: NativeEventSubscription | null;
 
@@ -112,17 +139,15 @@ export class DdRumReactNavigationTracking {
     /**
      * Starts tracking the NavigationContainer and sends a RUM View event every time the navigation route changed.
      * @param navigationRef the reference to the real NavigationContainer.
+     * @param viewNamePredicate the predicate to rename views.
+     * @param viewTrackingPredicate the predicate to determine if a view should be tracked or not.
+     * @param paramsTrackingPredicate the predicate to determine which parameters should be tracked for a given view.
      */
     static startTrackingViews(
         navigationRef: NavigationContainerRef | null,
-
-        // eslint-disable-next-line func-names
-        viewNamePredicate: ViewNamePredicate = function (
-            _route: Route<string, any | undefined>,
-            trackedName: string
-        ) {
-            return trackedName;
-        }
+        viewNamePredicate: ViewNamePredicate = defaultViewNamePredicate,
+        viewTrackingPredicate: ViewTrackingPredicate = defaultViewTrackingPredicate,
+        paramsTrackingPredicate: ParamsTrackingPredicate = defaultParamsPredicate
     ): void {
         this.navigationTimeline?.addStartTrackingEvent();
 
@@ -144,6 +169,8 @@ export class DdRumReactNavigationTracking {
             );
         } else if (DdRumReactNavigationTracking.registeredContainer == null) {
             DdRumReactNavigationTracking.viewNamePredicate = viewNamePredicate;
+            DdRumReactNavigationTracking.viewTrackingPredicate = viewTrackingPredicate;
+            DdRumReactNavigationTracking.paramsTrackingPredicate = paramsTrackingPredicate;
             DdRumReactNavigationTracking.registeredContainer = navigationRef;
 
             const listener = DdRumReactNavigationTracking.resolveNavigationStateChangeListener();
@@ -180,14 +207,9 @@ export class DdRumReactNavigationTracking {
             DdRumReactNavigationTracking.backHandler = null;
             DdRumReactNavigationTracking.registeredContainer = null;
             DdRumReactNavigationTracking.navigationStateChangeListener = null;
-
-            // eslint-disable-next-line func-names
-            DdRumReactNavigationTracking.viewNamePredicate = function (
-                _route: Route<string, any | undefined>,
-                trackedName: string
-            ) {
-                return trackedName;
-            };
+            DdRumReactNavigationTracking.viewNamePredicate = defaultViewNamePredicate;
+            DdRumReactNavigationTracking.viewTrackingPredicate = defaultViewTrackingPredicate;
+            DdRumReactNavigationTracking.paramsTrackingPredicate = defaultParamsPredicate;
         }
 
         // For versions of React Native below 0.65, addEventListener does not return a subscription.
@@ -242,7 +264,12 @@ export class DdRumReactNavigationTracking {
                         trackingState: this.trackingState
                     }
                 );
-                DdRum.startView(key, screenName);
+                if (DdRumReactNavigationTracking.viewTrackingPredicate(route)) {
+                    const params = DdRumReactNavigationTracking.paramsTrackingPredicate(
+                        route
+                    );
+                    DdRum.startView(key, screenName, { params });
+                }
             }
         }
 

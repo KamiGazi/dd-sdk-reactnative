@@ -17,7 +17,9 @@ export default class AboutScreen extends Component<any, any> {
             <Text>Click me</Text>
           </View>
         </TouchableNativeFeedback>
-        <Button title="go to nested" onPress={() => this.props.navigation.navigate('Nested')} />
+        <Button title="go to nested" onPress={() => {
+            this.props.navigation.navigate('Nested')}
+          } />
       </View>
     }
 }
