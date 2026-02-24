@@ -68,6 +68,42 @@ const hexToDecimal = (hex: string): string => {
     return BigInt(hex, 16).toString(10);
 };
 
+const defaultsConfig = [
+    {
+        urlRegex: /.*/,
+        requestHeaderNames: new Set(['cache-control', 'content-type']),
+        responseHeaderNames: new Set([
+            'cache-control',
+            'etag',
+            'age',
+            'expires',
+            'content-type',
+            'content-encoding',
+            'content-length',
+            'vary',
+            'server-timing',
+            'x-cache'
+        ]),
+        isScoped: false,
+        requestHeaderCasing: new Map([
+            ['cache-control', 'Cache-Control'],
+            ['content-type', 'Content-Type']
+        ]),
+        responseHeaderCasing: new Map([
+            ['cache-control', 'Cache-Control'],
+            ['etag', 'ETag'],
+            ['age', 'Age'],
+            ['expires', 'Expires'],
+            ['content-type', 'Content-Type'],
+            ['content-encoding', 'Content-Encoding'],
+            ['content-length', 'Content-Length'],
+            ['vary', 'Vary'],
+            ['server-timing', 'Server-Timing'],
+            ['x-cache', 'X-Cache']
+        ])
+    }
+];
+
 beforeEach(() => {
     DdNativeRum.startResource.mockClear();
     DdNativeRum.stopResource.mockClear();
@@ -111,7 +147,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com:443/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -148,7 +185,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -185,7 +223,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -227,7 +266,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -260,7 +300,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -293,7 +334,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.co',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -322,7 +364,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -351,7 +394,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -381,7 +425,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -407,7 +452,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -435,7 +481,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -467,7 +514,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.TRACECONTEXT]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -515,7 +563,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.B3MULTI]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -616,7 +665,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.B3MULTI]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -702,7 +752,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.B3MULTI]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -739,7 +790,8 @@ describe('XHRProxy', () => {
                         match: 'example.com',
                         propagatorTypes: [PropagatorType.B3]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -778,7 +830,8 @@ describe('XHRProxy', () => {
                             PropagatorType.B3MULTI
                         ]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -836,7 +889,8 @@ describe('XHRProxy', () => {
                             PropagatorType.B3MULTI
                         ]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             setCachedSessionId('TEST-SESSION-ID');
@@ -879,7 +933,8 @@ describe('XHRProxy', () => {
                             PropagatorType.B3MULTI
                         ]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             setCachedSessionId(undefined as any);
@@ -917,7 +972,8 @@ describe('XHRProxy', () => {
                             PropagatorType.B3MULTI
                         ]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             setCachedSessionId('TEST-SESSION-ID');
@@ -955,7 +1011,8 @@ describe('XHRProxy', () => {
                             PropagatorType.B3MULTI
                         ]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             setCachedSessionId('TEST-SESSION-ID');
@@ -999,7 +1056,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1035,7 +1093,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 50,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1074,7 +1133,8 @@ describe('XHRProxy', () => {
                         match: 'api.example.com',
                         propagatorTypes: [PropagatorType.DATADOG]
                     }
-                ])
+                ]),
+                headerCaptureConfig: null
             });
             jest.spyOn(global.Math, 'random').mockReturnValue(0.7);
 
@@ -1111,7 +1171,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             jest.doMock('react-native/Libraries/Utilities/Platform', () => ({
@@ -1159,7 +1220,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             jest.doMock('react-native/Libraries/Utilities/Platform', () => ({
@@ -1209,7 +1271,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1232,7 +1295,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/v2/user';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
             DdRum.registerResourceEventMapper(event => {
                 (event.context as any)['body'] = JSON.parse(
@@ -1476,7 +1540,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/graphql';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1519,7 +1584,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/graphql';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1557,7 +1623,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/graphql';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
 
             // WHEN
@@ -1596,7 +1663,8 @@ describe('XHRProxy', () => {
             const url = 'https://api.example.com/graphql';
             xhrProxy.onTrackingStart({
                 tracingSamplingRate: 100,
-                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([])
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
             });
             DdRum.registerResourceEventMapper(event => {
                 if ((event.context as any)['_dd.graphql.variables']) {
@@ -1637,6 +1705,426 @@ describe('XHRProxy', () => {
             expect(attributes['_dd.graphql.variables']).toBe(
                 '{"password":"***"}'
             );
+        });
+    });
+
+    describe('header capture', () => {
+        it('disabled mode: does not accumulate request headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            expect(
+                (xhr as any)._datadog_xhr.capturedRequestHeaders
+            ).toBeUndefined();
+        });
+
+        it('disabled mode: does not capture response headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'content-type: text/html\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            expect(
+                (xhr as any)._datadog_xhr.capturedResponseHeaders
+            ).toBeUndefined();
+        });
+
+        it('defaults mode: accumulates and filters allowed request headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('X-Custom', 'val');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN — content-type is in defaults, x-custom is not
+            expect((xhr as any)._datadog_xhr.capturedRequestHeaders).toEqual({
+                'Content-Type': 'application/json'
+            });
+        });
+
+        it('defaults mode: captures default response headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'content-type: text/html\r\ncache-control: no-cache\r\nx-custom: val\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN — content-type, cache-control in defaults; x-custom not
+            expect((xhr as any)._datadog_xhr.capturedResponseHeaders).toEqual({
+                'Content-Type': 'text/html',
+                'Cache-Control': 'no-cache'
+            });
+        });
+
+        it('defaults mode: skips response capture on aborted request (status 0)', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.send();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'content-type: text/html\r\n'
+            );
+            xhr.abort();
+            xhr.complete(0, undefined);
+            await flushPromises();
+
+            // THEN — status 0 means response capture is skipped
+            expect(
+                (xhr as any)._datadog_xhr.capturedResponseHeaders
+            ).toBeUndefined();
+        });
+
+        it('custom mode: captures only rule-matched headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/data';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: [
+                    {
+                        urlRegex: /.*example\.com.*/,
+                        requestHeaderNames: new Set(['x-request-id']),
+                        responseHeaderNames: new Set(['etag', 'x-cache']),
+                        isScoped: false,
+                        requestHeaderCasing: new Map([
+                            ['x-request-id', 'x-request-id']
+                        ]),
+                        responseHeaderCasing: new Map([
+                            ['etag', 'etag'],
+                            ['x-cache', 'x-cache']
+                        ])
+                    }
+                ]
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('X-Request-Id', 'abc');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'etag: abc123\r\ncontent-type: text/html\r\nx-cache: HIT\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN — only rule-matched headers appear
+            expect((xhr as any)._datadog_xhr.capturedRequestHeaders).toEqual({
+                'X-Request-Id': 'abc'
+            });
+            expect((xhr as any)._datadog_xhr.capturedResponseHeaders).toEqual({
+                etag: 'abc123',
+                'x-cache': 'HIT'
+            });
+        });
+
+        it('security: sensitive request headers are never accumulated', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Authorization', 'Bearer token');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN — authorization blocked by security filter
+            expect((xhr as any)._datadog_xhr.capturedRequestHeaders).toEqual({
+                'Content-Type': 'application/json'
+            });
+        });
+
+        it('security: sensitive response headers are filtered out', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: [
+                    {
+                        urlRegex: /.*/,
+                        requestHeaderNames: new Set<string>(),
+                        responseHeaderNames: new Set([
+                            'set-cookie',
+                            'cache-control'
+                        ]),
+                        isScoped: false,
+                        requestHeaderCasing: new Map(),
+                        responseHeaderCasing: new Map([
+                            ['set-cookie', 'set-cookie'],
+                            ['cache-control', 'cache-control']
+                        ])
+                    }
+                ]
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'set-cookie: session=abc\r\ncache-control: no-cache\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN — set-cookie blocked by isSensitiveHeader; only cache-control appears
+            expect((xhr as any)._datadog_xhr.capturedResponseHeaders).toEqual({
+                'cache-control': 'no-cache'
+            });
+        });
+    });
+
+    describe('header capture integration', () => {
+        it('disabled mode: no header attributes in stopResource context', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: null
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('Accept', 'text/html');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'content-type: text/html\r\ncache-control: no-cache\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            const stopContext = DdNativeRum.stopResource.mock.calls[0][4]; // 5th arg (index 4) = resource context
+            expect(stopContext['_dd.request_headers']).toBeUndefined();
+            expect(stopContext['_dd.response_headers']).toBeUndefined();
+        });
+
+        it('defaults mode: correct default headers captured, sensitive headers excluded', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.setRequestHeader('Authorization', 'Bearer secret');
+            xhr.setRequestHeader('X-Custom', 'val');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'content-type: text/html\r\ncache-control: no-cache\r\netag: abc\r\nset-cookie: session=xyz\r\nx-custom-resp: val\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            const stopContext = DdNativeRum.stopResource.mock.calls[0][4]; // 5th arg (index 4) = resource context
+            // Only default, non-sensitive request headers
+            expect(stopContext['_dd.request_headers']).toEqual({
+                'Content-Type': 'application/json'
+            });
+            // Only default response headers; set-cookie is sensitive, x-custom-resp not in defaults
+            expect(stopContext['_dd.response_headers']).toEqual({
+                'Content-Type': 'text/html',
+                'Cache-Control': 'no-cache',
+                ETag: 'abc'
+            });
+        });
+
+        it('custom mode: only rule-matched headers captured', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/data';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: [
+                    {
+                        urlRegex: /.*/,
+                        requestHeaderNames: new Set(['x-request-id']),
+                        responseHeaderNames: new Set(['x-correlation-id']),
+                        isScoped: false,
+                        requestHeaderCasing: new Map([
+                            ['x-request-id', 'x-request-id']
+                        ]),
+                        responseHeaderCasing: new Map([
+                            ['x-correlation-id', 'x-correlation-id']
+                        ])
+                    }
+                ]
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('X-Request-Id', 'test-123');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.getAllResponseHeaders.mockReturnValue(
+                'x-correlation-id: abc123\r\ncontent-type: text/html\r\n'
+            );
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            const stopContext = DdNativeRum.stopResource.mock.calls[0][4]; // 5th arg (index 4) = resource context
+            // Only the custom rule match
+            expect(stopContext['_dd.request_headers']).toEqual({
+                'X-Request-Id': 'test-123'
+            });
+            expect(stopContext['_dd.response_headers']).toEqual({
+                'x-correlation-id': 'abc123'
+            });
+        });
+
+        it('defaults mode: duplicate setRequestHeader uses last value (last-wins)', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'text/plain');
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            xhr.notifyResponseArrived();
+            xhr.complete(200, 'ok');
+            await flushPromises();
+
+            // THEN
+            const stopContext = DdNativeRum.stopResource.mock.calls[0][4]; // 5th arg (index 4) = resource context
+            expect(stopContext['_dd.request_headers']).toEqual({
+                'Content-Type': 'application/json'
+            });
+        });
+
+        it('network failure: resource reported without throwing, no response headers', async () => {
+            // GIVEN
+            const method = 'GET';
+            const url = 'https://api.example.com/v2/user';
+            xhrProxy.onTrackingStart({
+                tracingSamplingRate: 100,
+                firstPartyHostsRegexMap: firstPartyHostsRegexMapBuilder([]),
+                headerCaptureConfig: defaultsConfig
+            });
+
+            // WHEN
+            const xhr = new XMLHttpRequestMock();
+            xhr.open(method, url);
+            xhr.setRequestHeader('Content-Type', 'application/json');
+            xhr.send();
+            // Status 0 = network error/abort; XHRProxy skips response header capture by design
+            xhr.getAllResponseHeaders.mockReturnValue(null);
+            xhr.complete(0, undefined);
+            await flushPromises();
+
+            // THEN
+            expect(DdNativeRum.stopResource).toHaveBeenCalledTimes(1);
+            const stopContext = DdNativeRum.stopResource.mock.calls[0][4]; // 5th arg (index 4) = resource context
+            expect(stopContext['_dd.response_headers']).toBeUndefined();
+            // Test completing without throwing is proof no exception occurred
         });
     });
 });

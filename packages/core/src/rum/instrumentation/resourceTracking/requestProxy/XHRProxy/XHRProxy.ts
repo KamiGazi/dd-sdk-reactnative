@@ -19,6 +19,13 @@ import {
     DATADOG_GRAPH_QL_OPERATION_TYPE_HEADER,
     DATADOG_GRAPH_QL_VARIABLES_HEADER
 } from '../../graphql/graphqlHeaders';
+import {
+    accumulateRequestHeader,
+    captureResponseHeaders,
+    filterRequestHeadersByMode
+} from '../../headerCapture/captureHeaders';
+import { enforceSizeLimits } from '../../headerCapture/enforceSizeLimits';
+import type { CompiledHeaderCaptureConfig } from '../../headerCapture/types';
 import { DATADOG_BAGGAGE_HEADER, isDatadogCustomHeader } from '../../headers';
 import type { RequestProxyOptions } from '../interfaces/RequestProxy';
 import { RequestProxy } from '../interfaces/RequestProxy';
@@ -47,6 +54,9 @@ interface DdRumXhrContext {
     timer: Timer;
     tracingAttributes: DdRumResourceTracingAttributes;
     baggageHeaderEntries: Set<string>;
+    headerCaptureConfig: CompiledHeaderCaptureConfig;
+    capturedRequestHeaders: Record<string, string> | undefined;
+    capturedResponseHeaders?: Record<string, string>;
 }
 
 interface XHRProxyProviders {
@@ -129,7 +139,11 @@ const proxyOpen = (
                 userId: getCachedUserId(),
                 accountId: getCachedAccountId()
             }),
-            baggageHeaderEntries: new Set<string>()
+            baggageHeaderEntries: new Set<string>(),
+            headerCaptureConfig: context.headerCaptureConfig,
+            capturedRequestHeaders:
+                context.headerCaptureConfig !== null ? {} : undefined,
+            capturedResponseHeaders: undefined
         };
         // eslint-disable-next-line prefer-rest-params
         return originalXhrOpen.apply(this, arguments as any);
@@ -179,6 +193,42 @@ const proxyOnReadyStateChange = (
 
     xhrProxy.onreadystatechange = function onreadystatechange() {
         if (xhrProxy.readyState === xhrType.DONE) {
+            // Capture response headers (only if capture enabled and not aborted/network-error)
+            if (
+                xhrProxy._datadog_xhr.headerCaptureConfig !== null &&
+                xhrProxy.status !== 0
+            ) {
+                xhrProxy._datadog_xhr.capturedResponseHeaders = captureResponseHeaders(
+                    xhrProxy.getAllResponseHeaders(),
+                    xhrProxy._datadog_xhr.url,
+                    xhrProxy._datadog_xhr.headerCaptureConfig
+                );
+            }
+
+            // Filter accumulated request headers by mode now that URL is final
+            if (xhrProxy._datadog_xhr.capturedRequestHeaders !== undefined) {
+                xhrProxy._datadog_xhr.capturedRequestHeaders = filterRequestHeadersByMode(
+                    xhrProxy._datadog_xhr.capturedRequestHeaders,
+                    xhrProxy._datadog_xhr.url,
+                    xhrProxy._datadog_xhr.headerCaptureConfig
+                );
+            }
+
+            // Enforce size limits after security/mode filtering, before reporting
+            if (
+                xhrProxy._datadog_xhr.capturedRequestHeaders !== undefined ||
+                xhrProxy._datadog_xhr.capturedResponseHeaders !== undefined
+            ) {
+                const limited = enforceSizeLimits(
+                    xhrProxy._datadog_xhr.capturedRequestHeaders,
+                    xhrProxy._datadog_xhr.capturedResponseHeaders
+                );
+                xhrProxy._datadog_xhr.capturedRequestHeaders =
+                    limited.requestHeaders;
+                xhrProxy._datadog_xhr.capturedResponseHeaders =
+                    limited.responseHeaders;
+            }
+
             if (!xhrProxy._datadog_xhr.reported) {
                 reportXhr(xhrProxy, providers.resourceReporter);
                 xhrProxy._datadog_xhr.reported = true;
@@ -226,6 +276,8 @@ const reportXhr = async (
                 ? context.timer.timeAt(RESPONSE_START_LABEL)
                 : undefined
         },
+        capturedRequestHeaders: context.capturedRequestHeaders,
+        capturedResponseHeaders: context.capturedResponseHeaders,
         resourceContext: xhrProxy
     });
 };
@@ -269,7 +321,15 @@ const proxySetRequestHeader = (providers: XHRProxyProviders): void => {
             this._datadog_xhr.baggageHeaderEntries?.add(value);
         } else {
             // eslint-disable-next-line prefer-rest-params
-            return originalXhrSetRequestHeader.apply(this, arguments as any);
+            originalXhrSetRequestHeader.apply(this, arguments as any);
+            // Accumulate for header capture (only user-set, non-Datadog headers)
+            if (this._datadog_xhr?.capturedRequestHeaders !== undefined) {
+                accumulateRequestHeader(
+                    this._datadog_xhr.capturedRequestHeaders,
+                    header,
+                    value
+                );
+            }
         }
     };
 };
