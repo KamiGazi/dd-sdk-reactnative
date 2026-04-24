@@ -55,6 +55,7 @@ internal class DdSdkSessionStartedListenerTest {
     @BeforeEach
     fun `set up`() {
         DdSdkSessionStartedListener.invalidate()
+        DdSdkSessionStartedListener.resetIsRnSdkInitialized()
     }
 
     @Test
@@ -91,6 +92,7 @@ internal class DdSdkSessionStartedListenerTest {
         instance.setReactContext(mockReactContext)
         instance.setExceptionHandler(mockExceptionHandler)
         instance.setIsNewArchitecture(false)
+        instance.setIsRnSdkInitialized(true)
 
         val passedArgs = mutableListOf<String>()
         instance.setConvertToNativeArray {
@@ -108,6 +110,36 @@ internal class DdSdkSessionStartedListenerTest {
             argThat {
                 this.message == "TEST"
             }
+        )
+    }
+
+    @Test
+    fun `𝕄 session ID is NOT sent via bridge W { setReactContext fires before onRnSdkInitialized }`() { // ktlint-disable-line max-line-length
+        // GIVEN — bridge looks valid but RN SDK has not called initialize() from JS yet
+        whenever(mockReactContext.hasActiveReactInstance()).thenReturn(true)
+        whenever(mockReactContext.catalystInstance).thenReturn(mockCatalystInstance)
+        whenever(mockCatalystInstance.isDestroyed).thenReturn(false)
+        whenever(mockReactContext.fabricUIManager).thenReturn(null)
+
+        val instance = DdSdkSessionStartedListener.getInstance()
+
+        val mockConvertToNativeArray = mock<(array: Array<String>) -> NativeArray?>()
+        instance.setConvertToNativeArray(mockConvertToNativeArray)
+        instance.setIsNewArchitecture(false)
+
+        // WHEN — native session starts and context becomes available before JS initialize()
+        instance.onSessionStarted("TEST-SESSION-ID", false)
+        instance.setReactContext(mockReactContext)
+
+        // THEN — bridge must NOT be called (DatadogInternalReactBridge not yet registered)
+        verifyNoInteractions(mockConvertToNativeArray)
+
+        // WHEN — JS initialize() runs, guaranteeing the callable module is registered
+        instance.onRnSdkInitialized()
+
+        // THEN — catch-up delivery is now safe and matches __datadogOnMessageReceived(eventName, data)
+        verify(mockConvertToNativeArray).invoke(
+            argWhere { it.size == 2 && it[0] == "RUMSessionStarted" && it[1] == "TEST-SESSION-ID" }
         )
     }
 
@@ -134,9 +166,12 @@ internal class DdSdkSessionStartedListenerTest {
         verifyNoInteractions(mockConvertToNativeArray)
 
         // WHEN
+        instance.setIsRnSdkInitialized(true)
         instance.setReactContext(mockReactContext)
 
         // THEN
-        verify(mockConvertToNativeArray).invoke(argWhere { it.first() == "TEST-SESSION-ID" })
+        verify(mockConvertToNativeArray).invoke(
+            argWhere { it.size == 2 && it[0] == "RUMSessionStarted" && it[1] == "TEST-SESSION-ID" }
+        )
     }
 }
