@@ -10,11 +10,11 @@ import android.view.Choreographer
 
 internal class FrameRateProvider(
     reactFrameRateCallback: ((Double) -> Unit),
-    uiThreadExecutor: UiThreadExecutor
+    jsThreadExecutor: JsThreadExecutor
 ) {
     private val frameCallback: FpsFrameCallback = FpsFrameCallback(
         reactFrameRateCallback,
-        uiThreadExecutor
+        jsThreadExecutor
     )
 
     fun start() {
@@ -29,7 +29,7 @@ internal class FrameRateProvider(
 
 internal class FpsFrameCallback(
     private val reactFrameRateCallback: ((Double) -> Unit),
-    private val uiThreadExecutor: UiThreadExecutor
+    private val jsThreadExecutor: JsThreadExecutor
 ) : Choreographer.FrameCallback {
 
     private var choreographer: Choreographer? = null
@@ -44,15 +44,27 @@ internal class FpsFrameCallback(
     }
 
     fun start() {
-        uiThreadExecutor.runOnUiThread {
-            choreographer = Choreographer.getInstance()
-            choreographer?.postFrameCallback(this@FpsFrameCallback)
+        // Choreographer.getInstance() is bound to the calling thread's Looper, and frame callbacks
+        // fire on that same thread. To measure JS frame timings (and to mirror the iOS
+        // implementation, which adds the CADisplayLink to the JS thread's RunLoop), we MUST
+        // register the choreographer on the React Native JS thread. Running this on the UI thread
+        // would measure UI thread frames instead and miss long tasks / frozen frames caused by
+        // JS work.
+        jsThreadExecutor.runOnJsThread {
+            try {
+                val instance = Choreographer.getInstance()
+                instance.removeFrameCallback(this@FpsFrameCallback)
+                choreographer = instance
+                instance.postFrameCallback(this@FpsFrameCallback)
+            } catch (ignored: IllegalStateException) {
+                // The React Native JS thread always has a Looper, but Choreographer.getInstance()
+                // is documented to throw if the current thread has none, so guard defensively.
+            }
         }
     }
 
     fun stop() {
-        uiThreadExecutor.runOnUiThread {
-            choreographer = Choreographer.getInstance()
+        jsThreadExecutor.runOnJsThread {
             choreographer?.removeFrameCallback(this@FpsFrameCallback)
         }
     }

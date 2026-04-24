@@ -30,7 +30,7 @@ class DdSdkImplementation(
     private val reactContext: ReactApplicationContext,
     private val datadog: DatadogWrapper = DatadogSDKWrapper(),
     private val ddTelemetry: DdTelemetry = DdTelemetry(),
-    private val uiThreadExecutor: UiThreadExecutor = ReactUiThreadExecutor()
+    private val jsThreadExecutor: JsThreadExecutor = ReactJsThreadExecutor(reactContext)
 ) {
     internal val appContext: Context = reactContext.applicationContext
     internal val initialized = AtomicBoolean(false)
@@ -318,10 +318,10 @@ class DdSdkImplementation(
         ddSdkConfiguration: DdSdkConfiguration
     ): FrameRateProvider? {
         val frameTimeCallback = buildFrameTimeCallback(ddSdkConfiguration) ?: return null
-        val frameRateProvider = FrameRateProvider(frameTimeCallback, uiThreadExecutor)
-        reactContext.runOnJSQueueThread {
-            frameRateProvider.start()
-        }
+        // FrameRateProvider.start() self-dispatches onto the JS thread via [jsThreadExecutor],
+        // which is required for Choreographer to measure JS frame timings (see FrameRateProvider).
+        val frameRateProvider = FrameRateProvider(frameTimeCallback, jsThreadExecutor)
+        frameRateProvider.start()
 
         return frameRateProvider
     }

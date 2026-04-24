@@ -22,10 +22,10 @@ package/android/src/main/kotlin/com/datadog/reactnative/DdTraceImplementation.kt
 package/android/src/main/kotlin/com/datadog/reactnative/FrameRateProvider.kt
 package/android/src/main/kotlin/com/datadog/reactnative/GlobalState.kt
 package/android/src/main/kotlin/com/datadog/reactnative/JSONFileReader.kt
+package/android/src/main/kotlin/com/datadog/reactnative/JsThreadExecutor.kt
 package/android/src/main/kotlin/com/datadog/reactnative/NoOpViewTrackingStrategy.kt
 package/android/src/main/kotlin/com/datadog/reactnative/ProxyAuthenticator.kt
 package/android/src/main/kotlin/com/datadog/reactnative/SdkVersion.kt
-package/android/src/main/kotlin/com/datadog/reactnative/UiThreadExecutor.kt
 package/android/src/newarch/kotlin/com/datadog/reactnative/DdFlags.kt
 package/android/src/newarch/kotlin/com/datadog/reactnative/DdLogs.kt
 package/android/src/newarch/kotlin/com/datadog/reactnative/DdRum.kt
@@ -52,7 +52,7 @@ package/android/src/test/kotlin/com/datadog/tools/unit/MapExt.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/MockRumMonitor.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/ReflectUtils.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/RemoveFinalModifierJava.java
-package/android/src/test/kotlin/com/datadog/tools/unit/TestUiThreadExecutor.kt
+package/android/src/test/kotlin/com/datadog/tools/unit/TestJsThreadExecutor.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/forge/ActionEventForgeryFactory.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/forge/BaseConfigurator.kt
 package/android/src/test/kotlin/com/datadog/tools/unit/forge/DdSdkConfigurationForgeryFactory.kt

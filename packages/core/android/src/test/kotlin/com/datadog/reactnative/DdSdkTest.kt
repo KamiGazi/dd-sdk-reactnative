@@ -37,7 +37,7 @@ import com.datadog.android.trace.TraceConfiguration
 import com.datadog.android.trace.TracingHeaderType
 import com.datadog.tools.unit.GenericAssert.Companion.assertThat
 import com.datadog.tools.unit.MockRumMonitor
-import com.datadog.tools.unit.TestUiThreadExecutor
+import com.datadog.tools.unit.TestJsThreadExecutor
 import com.datadog.tools.unit.forge.BaseConfigurator
 import com.datadog.tools.unit.setStaticValue
 import com.datadog.tools.unit.toReadableArray
@@ -173,7 +173,7 @@ internal class DdSdkTest {
             mockReactContext,
             mockDatadog,
             mockDdTelemetry,
-            TestUiThreadExecutor()
+            TestJsThreadExecutor()
         )
 
         DatadogSDKWrapperStorage.onInitializedListeners.clear()

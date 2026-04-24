@@ -6,11 +6,11 @@
 
 package com.datadog.tools.unit
 
-import com.datadog.reactnative.UiThreadExecutor
+import com.datadog.reactnative.JsThreadExecutor
 
-internal class TestUiThreadExecutor : UiThreadExecutor {
-    override fun runOnUiThread(runnable: Runnable) {
-        // Run immediately in the same thread for tests
+internal class TestJsThreadExecutor : JsThreadExecutor {
+    override fun runOnJsThread(runnable: Runnable) {
+        // Run immediately on the calling thread for tests.
         runnable.run()
     }
 }
